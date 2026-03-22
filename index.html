@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>JSギミック学習ラボ | コードと動きで学ぶJavaScript</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #f1f5f9;
+      font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+      line-height: 1.5;
+      padding: 2rem 1.5rem;
+      color: #0f172a;
+    }
+
+    /* ヘッダー & 全体レイアウト */
+    .header {
+      max-width: 1400px;
+      margin: 0 auto 2rem auto;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2rem;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .sub {
+      color: #334155;
+      border-left: 4px solid #3b82f6;
+      padding-left: 1rem;
+      max-width: 700px;
+      margin: 0.75rem auto 0;
+      font-size: 1rem;
+      background: #eef2ff80;
+      border-radius: 1rem;
+      padding: 0.75rem 1.5rem;
+    }
+
+    /* カードグリッド */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 2rem;
+      max-width: 1500px;
+      margin: 0 auto;
+    }
+
+    /* カードデザイン */
+    .card {
+      background: white;
+      border-radius: 1.75rem;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05), 0 4px 8px rgba(0, 0, 0, 0.02);
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 35px rgba(0, 0, 0, 0.1);
+    }
+
+    /* デモエリア */
+    .demo-area {
+      background: #fefce8;
+      padding: 1.5rem;
+      border-bottom: 2px dashed #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      min-height: 180px;
+    }
+
+    .demo-title {
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: #1e293b;
+      align-self: flex-start;
+      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .badge {
+      background: #3b82f6;
+      color: white;
+      font-size: 0.7rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 40px;
+      font-weight: normal;
+    }
+
+    /* ギミック用UI部品 */
+    button, .gimmick-btn {
+      background: #3b82f6;
+      border: none;
+      color: white;
+      font-weight: 600;
+      padding: 0.6rem 1.2rem;
+      border-radius: 2rem;
+      cursor: pointer;
+      transition: 0.2s;
+      font-size: 0.9rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    button:hover {
+      background: #2563eb;
+      transform: scale(0.97);
+    }
+
+    .counter-number {
+      font-size: 3rem;
+      font-weight: 800;
+      font-family: monospace;
+      background: #0f172a;
+      color: white;
+      padding: 0.2rem 1rem;
+      border-radius: 2rem;
+      display: inline-block;
+      min-width: 100px;
+      text-align: center;
+    }
+
+    .color-box {
+      width: 120px;
+      height: 120px;
+      background: #f97316;
+      border-radius: 1.5rem;
+      transition: 0.2s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .toggle-text {
+      background: #e2e8f0;
+      padding: 0.75rem 1rem;
+      border-radius: 1rem;
+      font-weight: 500;
+      transition: 0.2s;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .live-preview {
+      background: #e6f0ff;
+      padding: 0.75rem;
+      border-radius: 1rem;
+      width: 100%;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    input {
+      padding: 0.6rem 1rem;
+      border-radius: 2rem;
+      border: 1px solid #cbd5e1;
+      width: 80%;
+      font-size: 0.9rem;
+    }
+
+    /* モーダル関連 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(3px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      visibility: hidden;
+      opacity: 0;
+      transition: 0.2s;
+    }
+    .modal-overlay.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    .modal-content {
+      background: white;
+      max-width: 280px;
+      width: 80%;
+      padding: 1.5rem;
+      border-radius: 2rem;
+      text-align: center;
+      box-shadow: 0 20px 35px rgba(0,0,0,0.3);
+    }
+    .close-modal {
+      background: #ef4444;
+      margin-top: 1rem;
+    }
+
+    /* ホバーアイコン */
+    .hover-icon {
+      font-size: 4rem;
+      cursor: pointer;
+      transition: 0.1s;
+      background: #f1f5f9;
+      padding: 0.5rem;
+      border-radius: 3rem;
+      width: 100px;
+      text-align: center;
+    }
+
+    /* 解説エリア (コード + 説明) */
+    .explain-area {
+      background: #f8fafc;
+      padding: 1.2rem 1.5rem;
+      border-top: 1px solid #e2e8f0;
+      font-size: 0.9rem;
+    }
+    .explain-text {
+      background: #eef2ff;
+      padding: 0.7rem 1rem;
+      border-radius: 1rem;
+      margin-bottom: 1rem;
+      border-left: 4px solid #3b82f6;
+      color: #1e293b;
+    }
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 1rem;
+      border-radius: 1rem;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      font-family: 'Fira Code', 'Courier New', monospace;
+      margin-top: 0.5rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    code {
+      font-family: monospace;
+    }
+    .small-note {
+      font-size: 0.7rem;
+      color: #475569;
+      margin-top: 0.5rem;
+      text-align: right;
+    }
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: #475569;
+      font-size: 0.8rem;
+      border-top: 1px solid #cbd5e1;
+      padding-top: 2rem;
+    }
+    @media (max-width: 760px) {
+      body { padding: 1rem; }
+      .grid { gap: 1.2rem; }
+      .demo-area { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚡ JavaScript ギミック学習ラボ</h1>
+  <div class="sub">
+    🧩 各カードのデモをクリック／タップ！ 下のコード＆解説と見比べながら「今、どんなJSが動いたか」を体系的に理解しよう
+  </div>
+</div>
+
+<div class="grid">
+  
+  <!-- カード1: カウンター -->
+  <div class="card">
+    <div class="demo-area">
+      <div class="demo-title">🔢 クリックカウンター <span class="badge">イベント + DOM更新</span></div>
+      <div>
+        <span class="counter-number" id="counterValue">0</span>
+      </div>
+      <div style="display: flex; gap: 0.8rem;">
+        <button id="incrementBtn">➕ カウントアップ</button>
+        <button id="resetCounterBtn" style="background:#64748b;">🔄 リセット</button>
+      </div>
+    </div>
+    <div class="explain-area">
+      <div class="explain-text">
+        📖 <strong>どう動く？</strong> 「カウントアップ」ボタンを押すたびに変数<code>count</code>が+1され、画面の数字を更新。<br>
+        🧠 <strong>ここで使っているJavaScriptの指示:</strong> イベントリスナー(<code>addEventListener</code>)でクリックを検知 → 変数を操作 → <code>textContent</code>で表示を書き換え。
+      </div>
+      <pre><code>// 実際のコード (抜粋)
+let count = 0;
+const counterSpan = document.getElementById('counterValue');
+
+incrementBtn.addEventListener('click', () => {
+  count++;
+  counterSpan.textContent = count;
+});
+
+resetBtn.addEventListener('click', () => {
+  count = 0;
+  counterSpan.textContent = count;
+});</code></pre>
+      <div class="small-note">💡 変数の状態保持と、表示への反映をセットで覚えよう</div>
+    </div>
+  </div>
+
+  <!-- カード2: ランダム背景色 -->
+  <div class="card">
+    <div class="demo-area">
+      <div class="demo-title">🎨 ランダムカラーボックス <span class="badge">Math.random + style操作</span></div>
+      <div id="colorBox" class="color-box" style="background-color: #f97316;"></div>
+      <button id="randomColorBtn">✨ 色をランダムに変更</button>
+    </div>
+    <div class="explain-area">
+      <div class="explain-text">
+        📖 <strong>どう動く？</strong> ボタンを押すと16進数のランダムなカラーコードを生成し、ボックスの<code>backgroundColor</code>に適用。<br>
+        🧠 <strong>使っているJS:</strong> <code>Math.random()</code>で数値生成 → 16進数変換 → <code>style.backgroundColor</code> で動的にスタイル変更。
+      </div>
+      <pre><code>// ランダム色生成の核心部分
+const box = document.getElementById('colorBox');
+const randomColorBtn = document.getElementById('randomColorBtn');
+
+randomColorBtn.addEventListener('click', () => {
+  const randomColor = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+  box.style.backgroundColor = randomColor;
+});</code></pre>
+      <div class="small-note">🎲 16777215 = 0xFFFFFF、ランダムな色の生成ロジックをマスター！</div>
+    </div>
+  </div>
+
+  <!-- カード3: テキスト表示/非表示 (トグル) -->
+  <div class="card">
+    <div class="demo-area">
+      <div class="demo-title">👻 表示・非表示トグル <span class="badge">classList / display制御</span></div>
+      <div id="toggleText" class="toggle-text">
+        🧙‍♂️ 「ここに隠れているメッセージだよ！ 見えたり消えたりできる！」
+      </div>
+      <button id="toggleVisibilityBtn">🔘 表示/非表示 切り替え</button>
+    </div>
+    <div class="explain-area">
+      <div class="explain-text">
+        📖 <strong>どう動く？</strong> ボタンを押すたびに、テキスト要素に対して<code>.hidden</code>クラスを付け外し。CSSで<code>display: none</code>を制御。<br>
+        🧠 <strong>重要コード:</strong> <code>classList.toggle('hidden')</code> で表示状態を簡単に切り替え。
+      </div>
+      <pre><code>// トグルギミック
+const textBlock = document.getElementById('toggleText');
+const toggleBtn = document.getElementById('toggleVisibilityBtn');
+
+toggleBtn.addEventListener('click', () => {
+  textBlock.classList.toggle('hidden');
+});
+
+/* CSSで .hidden { display: none; } を定義済み */</code></pre>
+      <div class="small-note">💡 classList.toggle は条件分岐を書かなくてOK。便利！</div>
+    </div>
+  </div>
+
+  <!-- カード4: リアルタイム入力反映 -->
+  <div class="card">
+    <div class="demo-area">
+      <div class="demo-title">📝 ライブテキスト反映 <span class="badge">inputイベント</span></div>
+      <input type="text" id="liveInput" placeholder="ここに文字を入力してみて" autocomplete="off">
+      <div class="live-preview" id="liveOutput">✨ 入力した文字がここに反映されます ✨</div>
+    </div>
+    <div class="explain-area">
+      <div class="explain-text">
+        📖 <strong>どう動く？</strong> 入力フィールドに文字を打つたび（または削除）に、下のプレビューエリアがリアルタイム更新。<br>
+        🧠 <strong>キーコード:</strong> <code>input</code>イベントを使い、<code>event.target.value</code>を取得 → <code>textContent</code>で表示。
+      </div>
+      <pre><code>const inputField = document.getElementById('liveInput');
+const outputSpan = document.getElementById('liveOutput');
+
+inputField.addEventListener('input', (event) => {
+  const currentText = event.target.value;
+  outputSpan.textContent = currentText || '✨ 入力した文字がここに反映されます ✨';
+});</code></pre>
+      <div class="small-note">🔄 inputイベントはキーボードだけでなくペーストなど全ての変更をキャッチ</div>
+    </div>
+  </div>
+
+  <!-- カード5: 簡易モーダル (ポップアップ) -->
+  <div class="card">
+    <div class="demo-area">
+      <div class="demo-title">🪟 モーダルウィンドウ <span class="badge">class追加/削除 & イベント伝搬</span></div>
+      <button id="openModalBtn" style="background:#8b5cf6;">📬 詳細を表示（モーダル）</button>
+      <div class="small-note" style="margin-top:0; font-size:0.7rem;">※ 背景クリックでも閉じられます</div>
+    </div>
+    <div class="explain-area">
+      <div class="explain-text">
+        📖 <strong>どう動く？</strong> ボタンでオーバーレイに<code>active</code>クラス追加 → モーダル出現。閉じるボタン or 背景クリックでクラス削除。<br>
+        🧠 <strong>重要なテクニック:</strong> <code>classList.add/remove</code> とイベント伝搬の制御。
+      </div>
+      <pre><code>// モーダル制御
+const modalOverlay = document.getElementById('modalOverlay');
+const openBtn = document.getElementById('openModalBtn');
+const closeModalBtn = document.getElementById('closeModalBtn');
+
+openBtn.addEventListener('click', () => modalOverlay.classList.add('active'));
+closeModalBtn.addEventListener('click', () => modalOverlay.classList.remove('active'));
+modalOverlay.addEventListener('click', (e) => {
+  if(e.target === modalOverlay) modalOverlay.classList.remove('active');
+});</code></pre>
+      <div class="small-note">✨ オーバーレイ自体をクリックした時だけ閉じる条件分岐がポイント</div>
+    </div>
+  </div>
+
+  <!-- カード6: ホバーで変化 (mouseenter/mouseleave) -->
+  <div class="card">
+    <div class="demo-area">
+      <div class="demo-title">🐭 ホバーエフェクト <span class="badge">mouseenter / mouseleave</span></div>
+      <div id="hoverIcon" class="hover-icon">😊</div>
+      <div style="font-size: 0.75rem;">👆 アイコンにマウスを乗せる (タップ長押しでも変化)</div>
+    </div>
+    <div class="explain-area">
+      <div class="explain-text">
+        📖 <strong>どう動く？</strong> 絵文字エリアにマウスが入ると「🎉」に変わり、離れると元の「😊」に戻る。<br>
+        🧠 <strong>使っているイベント:</strong> <code>mouseenter</code> と <code>mouseleave</code> でコンテンツのテキストを差し替え。
+      </div>
+      <pre><code>const icon = document.getElementById('hoverIcon');
+
+icon.addEventListener('mouseenter', () => {
+  icon.textContent = '🎉';
+});
+icon.addEventListener('mouseleave', () => {
+  icon.textContent = '😊';
+});
+
+// モバイルでもタップ＆ホバー擬似的に動作（タップ時にenter/leaveの代替）</code></pre>
+      <div class="small-note">💡 ホバーだけでなくタッチデバイスでも触ると変化、実用的なインタラクション</div>
+    </div>
+  </div>
+</div>
+
+<!-- モーダル構造 (カードの外に配置、全ページ共通) -->
+<div id="modalOverlay" class="modal-overlay">
+  <div class="modal-content">
+    <h3>📖 モーダルギミック解説</h3>
+    <p style="margin: 1rem 0;">このポップアップは<strong>JavaScript</strong>で動的にクラスを追加/削除して表示制御しています。クリックで開閉できる仕組み、コード解説と照らし合わせてみてね！</p>
+    <button id="closeModalBtn" class="close-modal">閉じる</button>
+  </div>
+</div>
+
+<footer>
+  🧠 体系的学習のコツ： 各ギミックを操作→「解説エリア」のコードと照合→自分の手で書き換えて遊んでみよう！<br>
+  ⚡ 全てのギミックは生のJavaScript (Vanilla JS) で実装。クリック・タップ・入力のたびにコード通りに動いています。
+</footer>
+
+<script>
+  (function() {
+    // ----- カード1: カウンターギミック -----
+    let count = 0;
+    const counterSpan = document.getElementById('counterValue');
+    const incrementBtn = document.getElementById('incrementBtn');
+    const resetCounterBtn = document.getElementById('resetCounterBtn');
+
+    function updateCounterDisplay() {
+      counterSpan.textContent = count;
+    }
+
+    if (incrementBtn) {
+      incrementBtn.addEventListener('click', () => {
+        count++;
+        updateCounterDisplay();
+      });
+    }
+    if (resetCounterBtn) {
+      resetCounterBtn.addEventListener('click', () => {
+        count = 0;
+        updateCounterDisplay();
+      });
+    }
+
+    // ----- カード2: ランダムカラー -----
+    const colorBox = document.getElementById('colorBox');
+    const randomColorBtn = document.getElementById('randomColorBtn');
+    if (randomColorBtn) {
+      randomColorBtn.addEventListener('click', () => {
+        // ランダムな16進数カラーコード生成 (必ず6桁になるよう調整)
+        const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+        colorBox.style.backgroundColor = randomHex;
+      });
+    }
+
+    // ----- カード3: 表示非表示トグル -----
+    const toggleTextBlock = document.getElementById('toggleText');
+    const toggleVisBtn = document.getElementById('toggleVisibilityBtn');
+    if (toggleVisBtn && toggleTextBlock) {
+      toggleVisBtn.addEventListener('click', () => {
+        toggleTextBlock.classList.toggle('hidden');
+      });
+    }
+
+    // ----- カード4: リアルタイム入力反映 -----
+    const liveInput = document.getElementById('liveInput');
+    const liveOutput = document.getElementById('liveOutput');
+    if (liveInput && liveOutput) {
+      liveInput.addEventListener('input', (e) => {
+        const val = e.target.value;
+        if (val.trim() === "") {
+          liveOutput.textContent = "✨ 入力した文字がここに反映されます ✨";
+        } else {
+          liveOutput.textContent = val;
+        }
+      });
+    }
+
+    // ----- カード5: モーダル制御 -----
+    const modalOverlay = document.getElementById('modalOverlay');
+    const openModalBtn = document.getElementById('openModalBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+
+    if (openModalBtn && modalOverlay) {
+      openModalBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        modalOverlay.classList.add('active');
+      });
+    }
+    if (closeModalBtn && modalOverlay) {
+      closeModalBtn.addEventListener('click', () => {
+        modalOverlay.classList.remove('active');
+      });
+    }
+    // 背景(オーバーレイ)をクリックしたら閉じる
+    if (modalOverlay) {
+      modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) {
+          modalOverlay.classList.remove('active');
+        }
+      });
+    }
+
+    // ----- カード6: ホバーで絵文字変更 (mouseenter/mouseleave 対応) -----
+    const hoverIcon = document.getElementById('hoverIcon');
+    if (hoverIcon) {
+      hoverIcon.addEventListener('mouseenter', () => {
+        hoverIcon.textContent = '🎉';
+      });
+      hoverIcon.addEventListener('mouseleave', () => {
+        hoverIcon.textContent = '😊';
+      });
+      // モバイルタッチサポート: touchstart / touchend でも切り替わるようにして体験向上
+      hoverIcon.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        hoverIcon.textContent = '🎉';
+      });
+      hoverIcon.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        hoverIcon.textContent = '😊';
+      });
+    }
+
+    // 追加: すべてのカード内コード例に「実際の動作との完全な整合性」を保つため、初期表示時に各デモのデフォルト状態を整える
+    // カラーBoxの初期色保持（何もしなくても良い）
+    // カウンター初期値0表示は既にOK
+    // モーダル初期非表示OK
+    // トグル表示初期表示OK
+    // ライブ出力の初期メッセージセット
+    if (liveOutput && (!liveInput || liveInput.value === "")) {
+      liveOutput.textContent = "✨ 入力した文字がここに反映されます ✨";
+    }
+    // ホバーアイコン初期テキスト保証
+    if (hoverIcon && hoverIcon.textContent !== "😊") hoverIcon.textContent = "😊";
+    // 念のため、.hidden スタイルが適用されないように toggleTextBlock 初期可視
+    if (toggleTextBlock) toggleTextBlock.classList.remove('hidden');
+  })();
+</script>
+</body>
+</html>
